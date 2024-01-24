@@ -1,0 +1,253 @@
+
+
+<!DOCTYPE html>
+<html lang="pt=br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caixa Jeova Gesso</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div id="logo">
+            <style>
+                #img{
+                    width: 100px;
+                    height: 100px;
+                    padding: 0px;
+                    margin: 0px;
+                    zoom: 150%;
+                }
+            </style>
+            <a href="/"><img id ='img' src="img/image-removebg-preview.png"  alt="block"></a>
+        </div>  
+        <div id="menu">
+            <ul id="headerlist">
+                <li><a href="/caixa">Caixa</a></li>
+                <li><a href="/estoque">Estoque</a></li>
+                <li><a id='history' href="/vendas">Vendas</a></li>
+            </ul>
+        </div>
+    </header>
+    
+    <div id="main">  
+        
+        <div id="janela1">
+            <h1>Produtos</h1>
+            <textarea name="" id="areatext" placeholder="Digite o que foi vendido" cols="30" rows="1"> </textarea>
+            <h1>Valor da venda</h1>
+            <input type="number" id='valor' placeholder="Digite o valor da venda">
+            <button id="btn">Adicionar a lista</button>
+        </div>
+        
+        <div id="janela2">
+            <div>
+                <h1 id="total">Total do dia acumulado: </h1>
+                <div id="endDay"></div>
+                <h1>Vendas do dia</h1>
+            </div>
+            <div id="out-tabela">
+                <table id="out-table">
+                    <tr>
+                        <th width="100">ID</th>
+                        <th>Produto</th>
+                        <th>Valor</th>
+                        <th>Deletar</th>
+                        <th>Hora</th>
+                    </tr>
+                    <tbody id="tbody">
+                    </tbody>
+            </div>
+        </div>
+
+    </div>
+    <div id="bt">
+        
+    </div>
+</body>
+<script>
+    
+    class Produto {
+        constructor(){
+            
+            this.arrayProdutos = JSON.parse(localStorage.getItem('tbProdutos')) || [];
+            this.id = this.arrayProdutos.length;
+        }
+        salvar(){ //salva os dados no array
+            let produto = this.lerDados();
+            if(this.validarCampos(produto)){
+                this.adicionar(produto);
+            }
+
+
+            console.log(this.arrayProdutos);
+        }
+
+        listarTabela() { //lista os dados na tabela
+            let tbody = document.getElementById('tbody');
+
+            tbody.innerText = '';
+            
+            for(let i = 0; i < this.arrayProdutos.length; i++) {
+                
+
+                let tr = tbody.insertRow();
+                let td_id = tr.insertCell();
+                let td_produto = tr.insertCell();
+                let td_valor = tr.insertCell();
+                let td_deletar = tr.insertCell();
+                let td_hora = tr.insertCell();
+                
+
+                td_id.innerText = this.arrayProdutos[i].id;
+                td_produto.innerText = this.arrayProdutos[i].name;
+                td_valor.innerText = 'R$ ' + this.arrayProdutos[i].valor;
+                td_deletar.innerHTML = '<img id="trash" src="trash.png"    img-del" alt="deletar">';   
+                td_hora.innerText = this.arrayProdutos[i].hour;
+
+                localStorage.setItem('tbProdutos', JSON.stringify(this.arrayProdutos));
+            }
+        }
+
+        adicionar(produto){ //adiciona os dados no array
+            this.arrayProdutos.push(produto);
+            this.id++;
+            localStorage.setItem('tbProdutos', JSON.stringify(this.arrayProdutos));
+
+        }
+
+        lerDados(){ //Salva o horario e ler os dados do formulario e vai ser usado no salvar()
+            let produto = {}
+            produto.id = this.id;
+            produto.name = document.getElementById('areatext').value;
+            produto.valor = document.getElementById('valor').value;
+            produto.hour = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            return produto;
+        }
+
+        validarCampos(produto){ //valida os campos do formulario e vai ser usado no salvar()   
+            let msg = '';
+            if(produto.name === undefined || produto.name === null || produto.name.trim() === '') {
+                msg += '- Informe o produto \n';
+            }
+            if(produto.valor == ''){
+                msg += '- Informe o valor \n';
+            }
+            if(msg != ''){
+                alert(msg);
+                return false;
+            }
+            return true;
+        }
+
+        redefinir (){ //redefinir os campos do formulario
+            document.getElementById('areatext').value = '';
+            document.getElementById('valor').value = '';
+        }
+
+        deletar(id){ //deletar os dados da tabela
+            if(confirm('Deseja realmente deletar o produto ' + id)){
+                let tbody = document.getElementById('tbody');
+                for(let i = 0; i < this.arrayProdutos.length; i++){
+                    if(this.arrayProdutos[i].id == id){
+                        this.arrayProdutos.splice(i, 1);
+                        tbody.deleteRow(i);
+                        localStorage.setItem('tbProdutos', JSON.stringify(this.arrayProdutos));
+                    }
+                }
+            }
+        }
+
+        somar(){ //soma os valores da tabela sempre que é chamado e mostra no UI
+            let soma = 0;
+            for (let i = 0; i < this.arrayProdutos.length; i++){
+                soma += parseFloat(this.arrayProdutos[i].valor);
+            }
+            document.getElementById('total').innerText = 'TOTAL DO DIA: ' + 'R$ ' + soma.toString();
+        }
+
+        endDay(){ //finaliza o dia e zera o array
+            if(confirm('Deseja realmente finalizar o dia?')){
+                this.arrayProdutos = [];
+                localStorage.setItem('tbProdutos', JSON.stringify(this.arrayProdutos));
+                this.listarTabela();
+                this.somar();
+            }
+        }
+          
+    }
+    
+    
+    let btn = document.getElementById('btn');
+    let tbody = document.getElementById('tbody');
+    let produto = new Produto();
+    produto.listarTabela();
+    produto.somar();
+
+    if (produto.arrayProdutos.length > 0){
+        document.getElementById('endDay').innerHTML = '<button class="btn2">Finalizar o dia</button>';
+    }
+
+    //ADICIONAR
+    btn.addEventListener('click', function(){
+        produto.salvar();
+        produto.listarTabela();
+        produto.redefinir();
+        produto.somar();
+        if (produto.arrayProdutos.length > 0){
+            document.getElementById('endDay').innerHTML = '<button class="btn2">Finalizar o dia</button>';
+        }
+        if (produto.arrayProdutos.length == 0){
+            document.getElementById('endDay').innerHTML = '';
+        }
+    });
+    //DELETAR
+    tbody.addEventListener('click', function(event){      
+        produto.deletar(event.target.parentNode.parentNode.childNodes[0].innerText);
+        produto.listarTabela();
+        produto.somar();
+        if (produto.arrayProdutos.length > 0){
+            document.getElementById('endDay').innerHTML = '<button class="btn2">Finalizar o dia</button>';
+        }
+        if (produto.arrayProdutos.length == 0){
+            document.getElementById('endDay').innerHTML = '';
+        }
+    });
+
+    //FINALIZAR O DIA
+    let endDay = document.getElementById('endDay');
+    if (endDay){
+        endDay.addEventListener('click', function(){
+            produto.endDay();
+            produto.listarTabela();
+            produto.somar();
+            if (produto.arrayProdutos.length > 0){
+                document.getElementById('endDay').innerHTML = '<button class="btn2">Finalizar o dia</button>';
+            }
+            if (produto.arrayProdutos.length == 0){
+                document.getElementById('endDay').innerHTML = '';
+            }
+            let history = document.getElementById('history');
+            let cor = '#0969DA';
+            history.style.animation = 'blink 3s infinite';
+
+        });
+    }
+
+    
+
+        
+
+    
+        
+    
+    
+
+
+    
+    
+
+
+</script>
+</html>
